@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2016.2 (Build 736U)" ts="2018-02-14 22:23:15">
+<Class name="SMWrap.index">
+<Super>%CSP.Page</Super>
+<TimeChanged>64693,80540.968589</TimeChanged>
+<TimeCreated>64693,80512.859717</TimeCreated>
+
+<Method name="OnPage">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	s path="https://raw.githubusercontent.com/MyasnikovIA/CacheGitHub/master/index.html"
+    Set httprequest=##class(%Net.HttpRequest).%New()
+    set httprequest.SSLConfiguration="MySSLConfiguration"
+    set httprequest.Https=1
+    set httprequest.Server="raw.githubusercontent.com"
+    set httprequest.Port=443
+    set tSc = httprequest.Get(path)
+    for {
+	  q:httprequest.HttpResponse.Data.AtEnd
+      w httprequest.HttpResponse.Data.Read(32000)
+    }
+	Quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>
