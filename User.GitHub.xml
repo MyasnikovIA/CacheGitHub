@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2014.1.5 (Build 851)" ts="2018-02-14 22:09:10">
+<Class name="User.GitHub">
+<Super>%CSP.Page</Super>
+<TimeChanged>64693,79162.670298</TimeChanged>
+<TimeCreated>64693,74997.954948</TimeCreated>
+
+<Method name="OnPage">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	&html<
+	   <script language="JavaScript" type="text/javascript" src="HTML.RunJob.cls"></script>  
+	   <input style="width:100%" id="filename" value="/SMWrap2017/master/SMWrap.xml"/><button onclick='loadRes()'>Load</button>
+	   <pre>
+	   <div id="info"></div>
+	   </pre>
+	   <script language="JavaScript">
+	      loadRes=function(){
+		     document.getElementById("info").innerHTML=callJob("User.GitHub.LoadXML",document.getElementById("filename").value)   ;
+	      }
+	  </script>
+	>
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="LoadXML">
+<Description>
+  d ##class(User.GitHub).LoadXML("/SMWrap2017/master/SMWrap.xml")</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>path="/SMWrap2017/master/SMWrap.xml"</FormalSpec>
+<Implementation><![CDATA[
+    s path="/MyasnikovIA"_path
+    s OldNs=$zu(5)
+    d $zu(5,"%SYS")
+    Set httprequest=##class(%Net.HttpRequest).%New()
+    set httprequest.SSLConfiguration="MySSLConfiguration"
+    set httprequest.Https=1
+    set httprequest.Server="raw.githubusercontent.com"
+    set httprequest.Port=443
+    set tSc = httprequest.Get(path)
+    s obj=httprequest.HttpResponse.ContentLength
+    SET File="GitHubXML.xml"
+    open File:"NWUK" 
+    use File
+    for {
+	  q:httprequest.HttpResponse.Data.AtEnd
+      w httprequest.HttpResponse.Data.Read(32000)
+    }
+    close File
+    u 0
+    d $system.OBJ.Load(File)
+    d ##class(%File).Delete(File)
+    d $zu(5,OldNs)
+    q
+]]></Implementation>
+</Method>
+</Class>
+</Export>
