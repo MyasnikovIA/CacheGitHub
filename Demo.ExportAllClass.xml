@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-32) 2017.1 (Build 792)" ts="2018-03-04 00:06:12">
+<Class name="Demo.ExportAllClass">
+<IncludeCode>%cspInclude</IncludeCode>
+<Super>%CSP.Page</Super>
+<TimeChanged>64710,83517.000772</TimeChanged>
+<TimeCreated>64708,31198.057437</TimeCreated>
+
+<Parameter name="FileName">
+<Expression>"SirenaAllClass_("_$ZU(5)_").xml"</Expression>
+</Parameter>
+
+<Method name="GetCSPApplications">
+<Description>
+ s gl=##class(Demo.ExportAllClass).GetCSPApplications()</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>gl="mtempGetCSPApplications("_$JOB_")",NameSpace=$zu(5)</FormalSpec>
+<ReturnType>%Library.String</ReturnType>
+<Implementation><![CDATA[
+ s urls=""
+ s oldNS=$zu(5)
+ d:NameSpace'="" $zu(5, NameSpace)
+ k @gl
+ s num=0
+#if $p($$GetVersion^%apiOBJ()," ",4)<5.1
+ s url=$o($$$CSPAPP(""))
+ f  q:(url="")  d
+ . i $$$CSPAPPnamespace($$$CSPAPP(url))=$$$GETNS d
+ . . i ($$$GETNS'="%CACHELIB") || ((url'="/csp/broker") && (url'="/apps/documatic")) d
+ . . . s num=num+1 s @gl@(num)=url
+ . s url=$order($$$CSPAPP(url))
+#else
+	; we cannot use CSP applications in %CACHELIB namespace
+	i $znspace="%CACHELIB" q:$Q urls  q
+	s savens=$znspace
+	; we use query from %sys namespace with nonpercent classname
+	zn "%sys"
+	Set result=##class(%ResultSet).%New("Security.Applications:Detail")
+	Set sc=result.Execute("*") If $$$ISERR(sc) Quit
+	f  q:'result.Next(.sc)  d
+	. If $$$ISERR(sc) Quit
+	. ; if application type ends with "CSP"
+	. ; and exist in our work namespace
+	. i (result.Data("Type")?.E1"CSP")&(result.Data("NameSpace")=savens) d
+	. . s num=num+1 s @gl@(num)=result.Data("Name")
+	; we must kill object with nonpercent classname from %sys namespace in %sys namespace
+	k result
+	zn savens
+#endif
+ q gl
+]]></Implementation>
+</Method>
+
+<Method name="GetDir">
+<Description>
+Метод создает глобал сосписком файлов в каталоге ( и подкаталогах)</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>gl="mtempGetCSPApplications("_$JOB_")",Dir=""</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+ s filter=""
+ s rs = ##class(%Library.ResultSet).%New("%Library.File:FileSet")
+ s sc = rs.Execute(Dir,filter,"Name")
+ k files
+ while rs.Next()
+ {
+     s name = rs.Get("Name")
+     if (rs.Get("Type") = "D")
+     {
+        d ..GetDir(gl,name)
+     }else{
+        s @gl@(name)=$SYSTEM.CSP.FilenameToUrls(name)
+     }
+  }
+]]></Implementation>
+</Method>
+
+<Method name="GetCSPFiles">
+<Description>
+ s gl=##class(Demo.ExportAllClass).GetCSPFiles()</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>gl="mtempGetCSPFiles("_$JOB_")",NameSpace=$zu(5)</FormalSpec>
+<ReturnType>%Library.String</ReturnType>
+<Implementation><![CDATA[
+ #define CSPAppDirDoesNotExist 5956
+ s num=0
+ s url=$System.CSP.GetDefaultApp(NameSpace)
+ i $e(url,$L(url))="/"!($e(url,$L(url))="\") s url=$e(url,1,$l(url)-1)
+ ; s setting=$$getapp^%cspServer(url_"/",.path)
+ ; i setting="" q $$$ERROR($$$CSPApplicationDoesNotExist,url)
+ ; s recurse=$lg(setting,3,0)
+ s recurse=1
+ s dir=##class(%File).NormalizeDirectory($$GetFilename^%apiCSP(url_"/"))
+ d ..GetDir(gl,dir)
+ /*
+ i '##class(%File).DirectoryExists(dir) q $$$ERROR($$$CSPAppDirDoesNotExist,dir,url)
+ s files=""
+ s f=$zsearch(dir_"*"),count=1
+ f  q:f=""  d  s f=$zsearch("")
+ . s isdir=##class(%File).DirectoryExists(f)
+ . i 'recurse,isdir q
+ . i isdir,$e($tr(f,"\","/"),$l(f)-2,32767)="/.."!($e($tr(f,"\","/"),$l(f)-1,32767)="/.") Quit
+ . s ext=$zcvt($p(f,".",$l(f,".")),"l")
+ . i (ext="csp") ! (ext="csr") ! isdir    s num=num+1 s @gl@(num)=f   s count=count+1
+ */
+ q gl
+]]></Implementation>
+</Method>
+
+<Method name="ExportProject">
+<Description>
+d ##class(Demo.ExportAllClass).ExportProject("C:\_CacheSys\ProjectSirena.xml")</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>path=""</FormalSpec>
+<Implementation><![CDATA[
+    s:path="" path="F:\XML\JS\SirenaAllClass ("_$replace($zd(+$h,4),"/",".")_").xml"
+    s ClassName="" 
+    s ind=0
+    For { 
+       s ClassName=$o(^oddDEF(ClassName)) 
+       q:ClassName="" 
+       continue:$l(ClassName,"%")=2
+        s all(ClassName_".cls")=""
+    }
+    s ClassName="" 
+    For { 
+       s ClassName=$o(^rINC(ClassName)) 
+       q:ClassName="" 
+       continue:$l(ClassName,"%")=2
+       s all(ClassName_".INC")=""
+    }
+    s ClassName="" 
+    For { 
+       s ClassName=$o(^ROUTINE(ClassName)) 
+       q:ClassName="" 
+       continue:$l(ClassName,"%")=2
+       s all(ClassName_".MAC")=""
+    }
+    s ClassName="" 
+    For { 
+       s ClassName=$o(^rMAC(ClassName)) 
+       q:ClassName="" 
+       continue:$l(ClassName,"%")=2
+       s all(ClassName_".MAC")=""
+    }
+    
+    s ClassName="" 
+    For { 
+       s ClassName=$o(^rOBJ(ClassName)) 
+       q:ClassName="" 
+       continue:$l(ClassName,"%")=2
+       s all(ClassName_".OBJ")=""
+    }    
+    /// получаем список CSP файлов
+    s gl=..GetCSPFiles()
+    s file=""
+    for {
+	   s file=$o(@gl@(file))
+	   q:file=""
+	   s url=$lg(@gl@(file),1)
+	   s all(url)=""
+    }
+    s all("^repository.GBL")=""
+    s all("^Auth.CurrentStateD.GBL")=""
+    s all("^Auth.CurrentStateI.GBL")=""
+    s all("^Auth.IP.GBL")=""
+    s all("^Auth.SysFuncD.GBL")=""
+    s all("^Auth.SysFuncI.GBL")=""
+    s all("^Auth.SysGroupD.GBL")=""
+    s all("^Auth.SysRoleD.GBL")=""
+    s all("^Auth.SysRoleGroupD.GBL")=""
+    s all("^Auth.SysRoleI.GBL")=""
+    s all("^Auth.SysRoleTemplateD.GBL")=""
+    s all("^Auth.SysRoleTemplateI.GBL")=""
+    s all("^Auth.SysUserD.GBL")=""
+    s all("^Auth.SysUserGroupD.GBL")=""
+    s all("^Auth.SysUserI.GBL")=""
+    s all("^Auth.SysUserRoleD.GBL")=""
+    s all("^Auth.SysUserRoleI.GBL")=""
+    s all("^Refs.AllBazeD.GBL")=""
+    d $system.OBJ.Export(.all,path)
+    k all
+    w path,!
+    q
+]]></Implementation>
+</Method>
+
+<Method name="OnPage">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	
+    if ##class(%File).Exists(..#FileName)=1   {
+           S stream=##class(%FileBinaryStream).%New()
+           S stream.Filename=..#FileName
+           While 'stream.AtEnd  {
+                s readFrag=stream.Read(32000)
+                w readFrag
+           }
+           d stream.%Close()
+           d ##class(%File).Delete(..#FileName)
+           ; Do $system.OBJ.Delete(##THIS,"c",.errorlog)
+	  Quit $$$OK
+    }
+    w "<pre>"
+     d ##class(Demo.ExportAllClass).ExportProject(..#FileName)
+     ; Do $system.OBJ.ExportAllClasses("D:\sirena\EcoClass.tx_","Sirena",.errorlog)
+     w "</pre>"
+     w "<script>",$c(13,10)
+     w "    window.location.href=window.location.toString();",$c(13,10)
+     w "    alert('Перезагрузите страницу!!!!');",$c(13,10)
+     w "</script>",$c(13,10)
+   
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="OnPreHTTP">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Library.Boolean</ReturnType>
+<Implementation><![CDATA[
+    if ##class(%File).Exists(..#FileName)=1   {
+       do %response.SetHeader("Content-Disposition","attachment;filename="""_..#FileName_"""")
+      set %response.Expires = "Thu, 01 Apr 2003 00:00:00 GMT"
+      set %response.HeaderCharSet ="windows-1251"
+      set %response.ContentType="application/x-msexcel"
+      ; set %response.ContentType="text/plain"
+      // Do %response.SetHeader("Content-Type","application/octet-stream")   
+      // Do %response.SetHeader("Content-Disposition: attachment; filename=",$p(..#FileName_dat,"/",$l(..#FileName_dat,"/"))) 
+    }else{
+      Do %response.SetHeader("Content-Type","text/html")   
+    }
+    q 1
+]]></Implementation>
+</Method>
+
+<Method name="LoadGitHub">
+<Description>
+  d ##class(User.GitHub).LoadGitHub("/MyasnikovIA/SMWrap2017/master/SMWrap.xml")
+  d ##class(User.GitHub).LoadGitHub("/MyasnikovIA/SMWrap2017/master/SMWrap.xml")</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>path="/MyasnikovIA/SMWrap2017/master/SMWrap.xml",SSLConfigName="MySSLConfiguration"</FormalSpec>
+<Implementation><![CDATA[
+    s OldNs=$zu(5)
+    d $zu(5,"%SYS")
+    Set httprequest=##class(%Net.HttpRequest).%New()
+    set httprequest.SSLConfiguration=SSLConfigName
+    set httprequest.Https=1
+    set httprequest.Server="raw.githubusercontent.com"
+    set httprequest.Port=443
+    set tSc = httprequest.Get(path)
+    s obj=httprequest.HttpResponse.ContentLength
+    SET File="GitHubXML.xml"
+    open File:"NWUK" 
+    use File
+    for {
+	  q:httprequest.HttpResponse.Data.AtEnd
+      w httprequest.HttpResponse.Data.Read(32000)
+    }
+    close File
+    u 0
+    d $system.OBJ.Load(File)
+    d ##class(%File).Delete(File)
+    d $zu(5,OldNs)
+    q
+]]></Implementation>
+</Method>
+</Class>
+</Export>
